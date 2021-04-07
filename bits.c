@@ -35,6 +35,7 @@ Bits newBits(int nbits)
 void freeBits(Bits b)
 {
 	//TODO
+	free(b);
 }
 
 // check if the bit at position is 1
@@ -44,7 +45,10 @@ Bool bitIsSet(Bits b, int position)
 	assert(b != NULL);
 	assert(0 <= position && position < b->nbits);
 	//TODO
-	return FALSE; // remove this
+	int byteIdx = position / 8;
+	int bitIdx = position % 8;
+	if (b->bitstring[byteIdx] & (1 << bitIdx)) return TRUE;
+	else return FALSE;
 }
 
 // check whether one Bits b1 is a subset of Bits b2
@@ -54,7 +58,14 @@ Bool isSubset(Bits b1, Bits b2)
 	assert(b1 != NULL && b2 != NULL);
 	assert(b1->nbytes == b2->nbytes);
 	//TODO
-	return FALSE; // remove this
+	for (int i = 0; i < b1->nbytes; i++) {
+		int j = 0;
+		for (; j < b2->nbytes; j++) {
+			if (b1->bitstring[i] == b2->bitstring[j]) break;
+		}
+		if (j == b2->nbytes) return FALSE;
+	}
+	return TRUE; 
 }
 
 // set the bit at position to 1
@@ -64,6 +75,9 @@ void setBit(Bits b, int position)
 	assert(b != NULL);
 	assert(0 <= position && position < b->nbits);
 	//TODO
+	int byteIdx = position / 8;
+	int bitIdx = position % 8;
+	b->bitstring[byteIdx] |= 1 << bitIdx;
 }
 
 // set all bits to 1
@@ -72,6 +86,13 @@ void setAllBits(Bits b)
 {
 	assert(b != NULL);
 	//TODO
+	int last_avail = 8 * b->nbytes - b->nbits;
+    	Byte mask = 0xFF >> last_avail;
+	for (int i = 0; i < b->nbytes; i++) {
+		b->bitstring[i] |= 0xFF;
+		if (i == b->nbytes - 1)
+			b->bitstring[i] &= mask;
+	}
 }
 
 // set the bit at position to 0
@@ -81,6 +102,10 @@ void unsetBit(Bits b, int position)
 	assert(b != NULL);
 	assert(0 <= position && position < b->nbits);
 	//TODO
+	int byteIdx = position / 8;
+	int bitIdx = position % 8;
+	b->bitstring[byteIdx] &= ~(1 << bitIdx);
+
 }
 
 // set all bits to 0
@@ -89,6 +114,9 @@ void unsetAllBits(Bits b)
 {
 	assert(b != NULL);
 	//TODO
+	for (int i = 0; i < b->nbytes; i++) {
+		b->bitstring[i] |= 0x00;
+	}
 }
 
 // bitwise AND ... b1 = b1 & b2
@@ -98,6 +126,9 @@ void andBits(Bits b1, Bits b2)
 	assert(b1 != NULL && b2 != NULL);
 	assert(b1->nbytes == b2->nbytes);
 	//TODO
+	for (int i = 0; i < b1->nbytes; i++) {
+		b1->bitstring[i] &= b2->bitstring[i];	
+	}
 }
 
 // bitwise OR ... b1 = b1 | b2
@@ -107,6 +138,9 @@ void orBits(Bits b1, Bits b2)
 	assert(b1 != NULL && b2 != NULL);
 	assert(b1->nbytes == b2->nbytes);
 	//TODO
+	for (int i = 0; i < b1->nbytes; i++) {
+		b1->bitstring[i] |= b2->bitstring[i];	
+	}
 }
 
 // left-shift ... b1 = b1 << n
@@ -115,6 +149,16 @@ void orBits(Bits b1, Bits b2)
 void shiftBits(Bits b, int n)
 {
     // TODO
+    int last_avail = 8 * b->nbytes - b->nbits;
+    Byte prev, next, mask = 0xFF >> last_avail;
+    for (int i = 0; i < b->nbytes; i++) {
+    	next = b->bitstring[i] >> (8 - n);	// save the left-most n bits
+	b->bitstring[i] = b->bitstring[i] << n;	// left shift bitstring
+	b->bitstring[i] |= prev;		// combine with previous left-most n bits
+	if (i == b->nbytes - 1)
+		b->bitstring[i] &= mask;
+	prev = next;				// update left-most n bits
+    }
 }
 
 // get a bit-string (of length b->nbytes)
@@ -124,6 +168,8 @@ void shiftBits(Bits b, int n)
 void getBits(Page p, Offset pos, Bits b)
 {
 	//TODO
+	Byte* start_addr = addrInPage(p, pos, b->nbytes);
+	memcpy(b->bitstring, start_addr, b->nbytes);
 }
 
 // copy the bit-string array in a BitsRep
@@ -132,6 +178,8 @@ void getBits(Page p, Offset pos, Bits b)
 void putBits(Page p, Offset pos, Bits b)
 {
 	//TODO
+	Byte* start_addr = addrInPage(p, pos, b->nbytes);
+	memcpy(start_addr,b->bitstring, b->nbytes);
 }
 
 // show Bits on stdout
