@@ -178,7 +178,6 @@ void putBits(Page p, Offset pos, Bits b)
 	//TODO
 	Byte* start_addr = addrInPage(p, pos, b->nbytes);
 	memcpy(start_addr,b->bitstring, b->nbytes);
-	free(start_addr);
 }
 
 // show Bits on stdout

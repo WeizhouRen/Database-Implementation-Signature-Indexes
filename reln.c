@@ -13,6 +13,7 @@
 #include "psig.h"
 #include "bits.h"
 #include "hash.h"
+#include <math.h>
 
 // open a file with a specified suffix
 // - always open for both reading and writing
@@ -65,12 +66,12 @@ Status newRelation(char *name, Count nattrs, float pF, char sigtype,
 	Count bp = ceil(p->pm / p->bsigPP);	// number page need to add
 	for (PageID bsigpid = 0; bsigpid < bp; bsigpid++) {
 		addPage(r->bsigf);	// add new page
-		Page bisgp = getPage(r->bsigf, bsigpid);
+		Page bsigp = getPage(r->bsigf, bsigpid);
 		// add bsigs to each page
 		Count bpp = p->pm > p->bsigPP ? p->pm : p->bsigPP;
-		for (int bsigid = 0; bisgid < bpp; bsigid++) {
+		for (int bid = 0; bid < bpp; bid++) {
 			Bits bsig = newBits(p->bm);	// bsig has length bm bits
-			putBits(bisgp, bsigid, bsig);
+			putBits(bsigp, bid, bsig);
 			addOneItem(bsigp);
 			p->nbsigs++;
 			free(bsig);
@@ -193,13 +194,25 @@ PageID addToRelation(Reln r, Tuple t)
 	rp->npsigs++;
 	addOneItem(psigp);
 	putPage(r->psigf, psigpid, psigp);
-	free(psig);
+	
 
 	// use page signature to update bit-slices
 
 	//TODO
-	Pageid bsigpid = rp->bsigNpages - 1;
-	
+	// PageID bsigpid = rp->bsigNpages - 1;
+	for (int i = 0; i < rp->pm; i++) {
+		if (bitIsSet(psig, i)) {
+			PageID curbsigpid = i / rp->bsigPP;
+			Page curbsigp = getPage(r->bsigf, curbsigpid);
+			int bi = i - curbsigpid * rp->bsigPP;
+			Bits bsigBits = newBits(rp->bm);
+			getBits(curbsigp, bi, bsigBits);
+			setBit(bsigBits, pid);
+			putBits(curbsigp, bi, bsigBits);
+			putPage(r->bsigf, curbsigpid, curbsigp);
+		}
+	}
+	freeBits(psig);
 	return nPages(r)-1;
 }
 
