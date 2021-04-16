@@ -59,11 +59,8 @@ Bool isSubset(Bits b1, Bits b2)
 	assert(b1->nbytes == b2->nbytes);
 	//TODO
 	for (int i = 0; i < b1->nbytes; i++) {
-		int j = 0;
-		for (; j < b2->nbytes; j++) {
-			if (b1->bitstring[i] == b2->bitstring[j]) break;
-		}
-		if (j == b2->nbytes) return FALSE;
+		Byte and = b1->bitstring[i] & b2->bitstring[i];
+		if ((and ^ b1->bitstring[i]) != 0) return FALSE;
 	}
 	return TRUE; 
 }
@@ -87,7 +84,7 @@ void setAllBits(Bits b)
 	assert(b != NULL);
 	//TODO
 	int last_avail = 8 * b->nbytes - b->nbits;
-    	Byte mask = 0xFF >> last_avail;
+    Byte mask = 0xFF >> last_avail;
 	for (int i = 0; i < b->nbytes; i++) {
 		b->bitstring[i] |= 0xFF;
 		if (i == b->nbytes - 1)
@@ -153,11 +150,12 @@ void shiftBits(Bits b, int n)
     Byte prev, next, mask = 0xFF >> last_avail;
     for (int i = 0; i < b->nbytes; i++) {
     	next = b->bitstring[i] >> (8 - n);	// save the left-most n bits
-	b->bitstring[i] = b->bitstring[i] << n;	// left shift bitstring
-	b->bitstring[i] |= prev;		// combine with previous left-most n bits
-	if (i == b->nbytes - 1)
-		b->bitstring[i] &= mask;
-	prev = next;				// update left-most n bits
+		b->bitstring[i] = b->bitstring[i] << n;	// left shift bitstring
+		b->bitstring[i] |= prev;		// combine with previous left-most n bits
+		if (i == b->nbytes - 1) {
+			b->bitstring[i] &= mask;
+		}
+		prev = next;				// update left-most n bits
     }
 }
 
@@ -180,6 +178,7 @@ void putBits(Page p, Offset pos, Bits b)
 	//TODO
 	Byte* start_addr = addrInPage(p, pos, b->nbytes);
 	memcpy(start_addr,b->bitstring, b->nbytes);
+	free(start_addr);
 }
 
 // show Bits on stdout

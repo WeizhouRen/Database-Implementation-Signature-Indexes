@@ -56,6 +56,25 @@ void scanAndDisplayMatchingTuples(Query q)
 {
 	assert(q != NULL);
 	//TODO
+	Page p; Tuple t; int pid, i = 0; Bool hasMatched;
+	for (pid = 0; pid < nPages(q->rel); pid++) {
+		// not set in matching page, ignore
+		if (!bitIsSet(q->pages, pid)) continue;	
+		p = getPage(dataFile(q->rel), pid);
+		hasMatched = FALSE;
+		for (i = 0; i < pageNitems(p); i++) {
+			// if tuple t match the query string, 
+			// display as query result
+			t = getTupleFromPage(q->rel, p, i);
+			if (tupleMatch(q->rel, t, (Tuple) q->qstring)) {
+				hasMatched = TRUE;
+				showTuple(q->rel, t);
+			}
+			free(t);
+		}
+		if (!hasMatched) q->nfalse++;
+		free(p);
+	}
 }
 
 // print statistics on query

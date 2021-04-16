@@ -10,6 +10,7 @@
 #include "page.h"
 #include "tuple.h"
 #include "tsig.h"
+#include "psig.h"
 #include "bits.h"
 #include "hash.h"
 
@@ -61,6 +62,23 @@ Status newRelation(char *name, Count nattrs, float pF, char sigtype,
 	// Create a file containing "pm" all-zeroes bit-strings,
     // each of which has length "bm" bits
 	//TODO
+	Count bp = ceil(p->pm / p->bsigPP);	// number page need to add
+	for (PageID bsigpid = 0; bsigpid < bp; bsigpid++) {
+		addPage(r->bsigf);	// add new page
+		Page bisgp = getPage(r->bsigf, bsigpid);
+		// add bsigs to each page
+		Count bpp = p->pm > p->bsigPP ? p->pm : p->bsigPP;
+		for (int bsigid = 0; bisgid < bpp; bsigid++) {
+			Bits bsig = newBits(p->bm);	// bsig has length bm bits
+			putBits(bisgp, bsigid, bsig);
+			addOneItem(bsigp);
+			p->nbsigs++;
+			free(bsig);
+		}
+		// add page into signature file and increase page count
+		putPage(r->bsigf, bsigpid, bsigp);
+		p->bsigNpages++;
+	}
 	closeRelation(r);
 	return 0;
 }
@@ -140,15 +158,48 @@ PageID addToRelation(Reln r, Tuple t)
 	// compute tuple signature and add to tsigf
 	
 	//TODO
+	// check if slot on last page; if not add new page
+	Bits tsig = makeTupleSig(r, t);	// compute tuple signature
+	PageID tsigpid = rp->tsigNpages - 1;
+	Page tsigp = getPage(r->tsigf, tsigpid);	// get last page
+	if (pageNitems(tsigp) == rp->tsigPP) {
+		addPage(r->tsigf);
+		rp->tsigNpages++;
+		tsigpid++;
+		free(tsigp);
+		tsigp = newPage();
+		if (tsigp == NULL) return NO_PAGE;
+	}
+	putBits(tsigp, pageNitems(tsigp), tsig);
+	rp->ntsigs++;
+	addOneItem(tsigp);
+	putPage(r->tsigf, tsigpid, tsigp);
+	freeBits(tsig);
 
 	// compute page signature and add to psigf
-
 	//TODO
+	Bits psig = makePageSig(r, t);	// compute page signature
+	PageID psigpid = rp->psigNpages - 1;
+	Page psigp = getPage(r->psigf, psigpid);	// get last page
+	if (pageNitems(psigp) == rp->psigPP) {
+		addPage(r->psigf);
+		rp->psigNpages++;
+		psigpid++;
+		free(psigp);
+		psigp = newPage();
+		if (psigp == NULL) return NO_PAGE;
+	}
+	putBits(psigp, pageNitems(psigp), psig);
+	rp->npsigs++;
+	addOneItem(psigp);
+	putPage(r->psigf, psigpid, psigp);
+	free(psig);
 
 	// use page signature to update bit-slices
 
 	//TODO
-
+	Pageid bsigpid = rp->bsigNpages - 1;
+	
 	return nPages(r)-1;
 }
 

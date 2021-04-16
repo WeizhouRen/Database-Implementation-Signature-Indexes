@@ -6,18 +6,54 @@
 #include "reln.h"
 #include "query.h"
 #include "psig.h"
+#include "hash.h"
+
+Bits codeword(char *attr_value, int m, int k) 
+{
+	int nbits = 0;
+	Bits cword = newBits(m);
+	srandom(hash_any(attr_value, k));
+	while (nbits < k) {
+		int i = random() % m;
+		if (!bitIsSet(cword, i)) {
+			setBit(cword, i);
+			nbits++; 
+		}
+	}
+	return cword;
+}
 
 Bits makePageSig(Reln r, Tuple t)
 {
 	assert(r != NULL && t != NULL);
 	//TODO
-	return NULL; // remove this
+	Bits psig = newBits(psigBits(r)), cw;
+	char **tuplevals = tupleVals(r, t);
+	for (int i = 0; i < nAttrs(r); i++) {
+		cw = codeword(tuplevals[i], psigBits(r), codeBits(r));
+		orBits(psig, cw);
+	}
+	return psig;
 }
 
 void findPagesUsingPageSigs(Query q)
 {
 	assert(q != NULL);
 	//TODO
-	setAllBits(q->pages); // remove this
+	Bits qsig = makePageSig(q->rel, q->qstring),
+		psig = newBits(psigBits(q->rel));
+	Page psigp;
+	unsetAllBits(q->pages);
+	for (int pid = 0; pid < nPsigPages(q->rel); pid++) {
+		psigp = getPage(psigFile(q->rel), pid);
+		for(int psigid = 0; psigid < pageNitems(psigp); psigid++) {
+			getBits(psigp, psigid, psig);
+			if (!isSubset(qsig, psig)) continue;
+			int dpid = q->nsigs / maxPsigsPP(q->rel);
+			setBit(q->pages, dpid);
+			q->nsigs++;
+		}
+		q->nsigpages++;
+	}
 }
 
