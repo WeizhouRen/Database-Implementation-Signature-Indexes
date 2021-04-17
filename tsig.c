@@ -43,7 +43,9 @@ Bits makeTupleSig(Reln r, Tuple t)
 	for (int i = 0; i < nAttrs(r); i++) {
 		cw = genCodeword(tuplevals[i], tsigBits(r), codeBits(r));
 		orBits(tsig, cw);
+		freeBits(cw);
 	}
+	free(tuplevals);
 	return tsig;
 }
 

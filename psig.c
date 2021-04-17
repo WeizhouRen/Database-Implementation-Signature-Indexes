@@ -32,8 +32,9 @@ Bits makePageSig(Reln r, Tuple t)
 	for (int i = 0; i < nAttrs(r); i++) {
 		Bits cw = codeword(tuplevals[i], psigBits(r), codeBits(r));
 		orBits(psig, cw);
-		free(cw);
+		freeBits(cw);
 	}
+	free(tuplevals);
 	return psig;
 }
 

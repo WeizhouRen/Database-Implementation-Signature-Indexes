@@ -145,13 +145,13 @@ PageID addToRelation(Reln r, Tuple t)
 	// add tuple to last page
 	pid = rp->npages-1;
 	p = getPage(r->dataf, pid);
-	// check if room on last page; if not add new page
-	if (pageNitems(p) == rp->tupPP) {
+	// check if room on last page; if not add new page	
+	if (pageNitems(p) == rp->tupPP) {		
 		addPage(r->dataf);
 		rp->npages++;
 		pid++;
 		free(p);
-		p = newPage();
+		p = newPage();	
 		if (p == NULL) return NO_PAGE;
 	}
 	addTupleToPage(r, p, t);
@@ -159,7 +159,7 @@ PageID addToRelation(Reln r, Tuple t)
 	putPage(r->dataf, pid, p);
 
 	// compute tuple signature and add to tsigf
-	
+		
 	//TODO
 	Bits tsig = makeTupleSig(r, t);	// compute tuple signature
 	PageID tsigpid = rp->tsigNpages - 1;
@@ -178,16 +178,20 @@ PageID addToRelation(Reln r, Tuple t)
 	addOneItem(tsigp);
 	putPage(r->tsigf, tsigpid, tsigp);
 	freeBits(tsig);
+	
 
 	// compute page signature and add to psigf
 	//TODO
 	// check if the last page in data file is new added
 	// if new added, add the psig directly to psigf
 	// otherwise, get psig of current data page and orBits
+	
+
 	Bits psig = makePageSig(r, t);				// compute page signature
 	PageID psigpid = rp->psigNpages - 1; 		// get current psig pid
 	Page psigp = getPage(r->psigf, psigpid); 	// get last psig page
-	if (pageNitems(p) == 1) { 
+		
+	if (nPsigs(r) != nPages(r)) { 
 		// new added page
 		if (pageNitems(psigp) == rp->psigPP) {
 			addPage(r->psigf);
@@ -198,13 +202,13 @@ PageID addToRelation(Reln r, Tuple t)
 			if (psigp == NULL) return NO_PAGE;
 		}
 		rp->npsigs++;
-		addOneItem(psigp);
 		putBits(psigp, pageNitems(psigp), psig);
-		putPage(r->psigf, psigpid, psigp);
+		addOneItem(psigp);
+		
 	} else {
 		// get current psig and do OR with new psig
 		Bits curpsig = newBits(psigBits(r));
-		getBits(psigp, pageNitems(psigp) - 1, curpsig);
+		getBits(psigp, pid % maxPsigsPP(r), curpsig);	
 		orBits(curpsig, psig);
 		putBits(psigp, pid % maxPsigsPP(r), curpsig);
 		free(curpsig);
@@ -216,8 +220,7 @@ PageID addToRelation(Reln r, Tuple t)
 	//TODO
 	for (int i = 0; i < rp->pm; i++) {
 		if (bitIsSet(psig, i)) {
-			PageID curbsigpid = i / rp->bsigPP;
-			// printf ("%d\n", curbsigpid);
+			PageID curbsigpid = i / rp->bsigPP;	
 			Page curbsigp = getPage(r->bsigf, curbsigpid);
 			Offset bi = i % rp->bsigPP;
 			Bits slice = newBits(rp->bm);
@@ -225,11 +228,11 @@ PageID addToRelation(Reln r, Tuple t)
 			setBit(slice, pid);
 			putBits(curbsigp, bi, slice);
 			putPage(r->bsigf, curbsigpid, curbsigp);
-			// free(curbsigp);
 			freeBits(slice);
 		}
 	}
 	freeBits(psig);
+	
 	return nPages(r)-1;
 }
 

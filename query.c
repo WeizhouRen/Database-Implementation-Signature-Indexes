@@ -56,7 +56,7 @@ void scanAndDisplayMatchingTuples(Query q)
 {
 	assert(q != NULL);
 	//TODO
-	Page p; Tuple t; int pid, i = 0; Bool hasMatched;
+	Page p; Tuple t; PageID pid; Offset i = 0; Bool hasMatched;
 	for (pid = 0; pid < nPages(q->rel); pid++) {
 		// not set in matching page, ignore
 		if (!bitIsSet(q->pages, pid)) continue;	
@@ -66,7 +66,7 @@ void scanAndDisplayMatchingTuples(Query q)
 			// if tuple t match the query string, 
 			// display as query result
 			t = getTupleFromPage(q->rel, p, i);
-			if (tupleMatch(q->rel, t, (Tuple) q->qstring)) {
+			if (tupleMatch(q->rel, t, q->qstring)) {
 				hasMatched = TRUE;
 				showTuple(q->rel, t);
 			}
