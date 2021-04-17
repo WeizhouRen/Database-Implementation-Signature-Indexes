@@ -184,7 +184,7 @@ PageID addToRelation(Reln r, Tuple t)
 	// check if the last page in data file is new added
 	// if new added, add the psig directly to psigf
 	// otherwise, get psig of current data page and orBits
-	Bits psig makePageSig(r, t);				// compute page signature
+	Bits psig = makePageSig(r, t);				// compute page signature
 	PageID psigpid = rp->psigNpages - 1; 		// get current psig pid
 	Page psigp = getPage(r->psigf, psigpid); 	// get last psig page
 	if (pageNitems(p) == 1) { 
@@ -198,15 +198,15 @@ PageID addToRelation(Reln r, Tuple t)
 			if (psigp == NULL) return NO_PAGE;
 		}
 		rp->npsigs++;
-		putBits(psigp, pageNitems(psigp), psig);
 		addOneItem(psigp);
+		putBits(psigp, pageNitems(psigp), psig);
 		putPage(r->psigf, psigpid, psigp);
 	} else {
 		// get current psig and do OR with new psig
 		Bits curpsig = newBits(psigBits(r));
 		getBits(psigp, pageNitems(psigp) - 1, curpsig);
 		orBits(curpsig, psig);
-		putBits(psigp, pageNitems(psigp) - 1, curpsig);
+		putBits(psigp, pid % maxPsigsPP(r), curpsig);
 		free(curpsig);
 	}
 	putPage(r->psigf, psigpid, psigp);
