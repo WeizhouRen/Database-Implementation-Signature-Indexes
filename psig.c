@@ -27,11 +27,12 @@ Bits makePageSig(Reln r, Tuple t)
 {
 	assert(r != NULL && t != NULL);
 	//TODO
-	Bits psig = newBits(psigBits(r)), cw;
+	Bits psig = newBits(psigBits(r));
 	char **tuplevals = tupleVals(r, t);
 	for (int i = 0; i < nAttrs(r); i++) {
-		cw = codeword(tuplevals[i], psigBits(r), codeBits(r));
+		Bits cw = codeword(tuplevals[i], psigBits(r), codeBits(r));
 		orBits(psig, cw);
+		free(cw);
 	}
 	return psig;
 }
@@ -40,19 +41,21 @@ void findPagesUsingPageSigs(Query q)
 {
 	assert(q != NULL);
 	//TODO
-	Bits qsig = makePageSig(q->rel, q->qstring),
-		psig = newBits(psigBits(q->rel));
-	Page psigp;
+	Bits qsig = makePageSig(q->rel, q->qstring);
 	unsetAllBits(q->pages);
 	for (int pid = 0; pid < nPsigPages(q->rel); pid++) {
-		psigp = getPage(psigFile(q->rel), pid);
+		Page psigp = getPage(psigFile(q->rel), pid);
 		for(int psigid = 0; psigid < pageNitems(psigp); psigid++) {
+			Bits psig = newBits(psigBits(q->rel));
 			getBits(psigp, psigid, psig);
-			if (!isSubset(qsig, psig)) continue;
-			int dpid = q->nsigs / maxPsigsPP(q->rel);
-			setBit(q->pages, dpid);
 			q->nsigs++;
+			if (isSubset(qsig, psig)) {
+				Offset datapid = psigid + pid * maxPsigsPP(q->rel);
+				setBit(q->pages, datapid);
+			}
+			freeBits(psig);
 		}
+		free(psigp);
 		q->nsigpages++;
 	}
 }

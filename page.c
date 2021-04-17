@@ -52,6 +52,7 @@ Page getPage(File f, PageID pid)
 	int ok = lseek(f, pid*PAGESIZE, SEEK_SET);
 	assert(ok >= 0);
 	int n = read(f, p, PAGESIZE);
+	// printf("%d %d\n", n, pid);
 	assert(n == PAGESIZE);
 	return p;
 }

@@ -61,24 +61,27 @@ void findPagesUsingTupSigs(Query q)
 {
 	assert(q != NULL);
 	//TODO
-	Bits qsig = makeTupleSig(q->rel, q->qstring), 
-		tsig = newBits(tsigBits(q->rel));
-	Page p;
+	Bits qsig = makeTupleSig(q->rel, q->qstring);
 	unsetAllBits(q->pages);	// all zero bits
 	// Iterate pages of tsig file
 	for (int pid = 0; pid < nTsigPages(q->rel); pid++) {
-		p = getPage(tsigFile(q->rel), pid);
+		Page p = getPage(tsigFile(q->rel), pid);
 		// Iterate tsigs in page p to get each tsig in tsigFile
 		for (int tid = 0; tid < pageNitems(p); tid++) {
+			Bits tsig = newBits(tsigBits(q->rel));
 			getBits(p, tid, tsig);	// get current tuple signature
-			if (!isSubset(qsig, tsig)) continue;
-			int dpid = q->nsigs / maxTsigsPP(q->rel);
-			setBit(q->pages, dpid);
 			q->nsigs++;
+			if (isSubset(qsig, tsig)) {
+				// convert to pageID in data file from pageID in tsig file
+				Offset datapid = (tid + pid * maxTsigsPP(q->rel)) / maxTupsPP(q->rel);
+				setBit(q->pages, datapid);
+			}
+			freeBits(tsig);
 		}
+		free(p);
 		q->nsigpages++;
 	}
-
+	freeBits(qsig);
 	// setAllBits(q->pages); // remove this
 
 	// The printf below is primarily for debugging

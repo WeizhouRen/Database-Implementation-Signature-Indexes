@@ -63,23 +63,25 @@ Status newRelation(char *name, Count nattrs, float pF, char sigtype,
 	// Create a file containing "pm" all-zeroes bit-strings,
     // each of which has length "bm" bits
 	//TODO
-	Count bp = ceil(p->pm / p->bsigPP);	// number page need to add
+	Count bp = iceil(p->pm, p->bsigPP);	// number page need to add
+	// printf ("pm is %d\nbm is %d\nbsig page needed is %d\n", p->pm, p->bm, bp);
+	// printf ("bsig per page is %d\n", p->bsigPP);
 	for (PageID bsigpid = 0; bsigpid < bp; bsigpid++) {
-		addPage(r->bsigf);	// add new page
-		Page bsigp = getPage(r->bsigf, bsigpid);
+		Page bsigp = newPage();
 		// add bsigs to each page
-		Count bpp = p->pm > p->bsigPP ? p->pm : p->bsigPP;
-		for (int bid = 0; bid < bpp; bid++) {
+		for (Offset bid = 0; bid < p->bsigPP; bid++) {
 			Bits bsig = newBits(p->bm);	// bsig has length bm bits
 			putBits(bsigp, bid, bsig);
 			addOneItem(bsigp);
 			p->nbsigs++;
-			free(bsig);
+			freeBits(bsig);
+			if (p->nbsigs == p->pm) break;
 		}
 		// add page into signature file and increase page count
 		putPage(r->bsigf, bsigpid, bsigp);
 		p->bsigNpages++;
 	}
+	p->bsigNpages--;
 	closeRelation(r);
 	return 0;
 }
@@ -159,10 +161,10 @@ PageID addToRelation(Reln r, Tuple t)
 	// compute tuple signature and add to tsigf
 	
 	//TODO
-	// check if slot on last page; if not add new page
 	Bits tsig = makeTupleSig(r, t);	// compute tuple signature
 	PageID tsigpid = rp->tsigNpages - 1;
 	Page tsigp = getPage(r->tsigf, tsigpid);	// get last page
+	// check if slot on last page; if not add new page
 	if (pageNitems(tsigp) == rp->tsigPP) {
 		addPage(r->tsigf);
 		rp->tsigNpages++;
@@ -179,37 +181,52 @@ PageID addToRelation(Reln r, Tuple t)
 
 	// compute page signature and add to psigf
 	//TODO
-	Bits psig = makePageSig(r, t);	// compute page signature
-	PageID psigpid = rp->psigNpages - 1;
-	Page psigp = getPage(r->psigf, psigpid);	// get last page
-	if (pageNitems(psigp) == rp->psigPP) {
-		addPage(r->psigf);
-		rp->psigNpages++;
-		psigpid++;
-		free(psigp);
-		psigp = newPage();
-		if (psigp == NULL) return NO_PAGE;
+	// check if the last page in data file is new added
+	// if new added, add the psig directly to psigf
+	// otherwise, get psig of current data page and orBits
+	Bits psig makePageSig(r, t);				// compute page signature
+	PageID psigpid = rp->psigNpages - 1; 		// get current psig pid
+	Page psigp = getPage(r->psigf, psigpid); 	// get last psig page
+	if (pageNitems(p) == 1) { 
+		// new added page
+		if (pageNitems(psigp) == rp->psigPP) {
+			addPage(r->psigf);
+			rp->psigNpages++;
+			psigpid++;
+			free(psigp);
+			psigp = newPage();
+			if (psigp == NULL) return NO_PAGE;
+		}
+		rp->npsigs++;
+		putBits(psigp, pageNitems(psigp), psig);
+		addOneItem(psigp);
+		putPage(r->psigf, psigpid, psigp);
+	} else {
+		// get current psig and do OR with new psig
+		Bits curpsig = newBits(psigBits(r));
+		getBits(psigp, pageNitems(psigp) - 1, curpsig);
+		orBits(curpsig, psig);
+		putBits(psigp, pageNitems(psigp) - 1, curpsig);
+		free(curpsig);
 	}
-	putBits(psigp, pageNitems(psigp), psig);
-	rp->npsigs++;
-	addOneItem(psigp);
 	putPage(r->psigf, psigpid, psigp);
-	
 
 	// use page signature to update bit-slices
 
 	//TODO
-	// PageID bsigpid = rp->bsigNpages - 1;
 	for (int i = 0; i < rp->pm; i++) {
 		if (bitIsSet(psig, i)) {
 			PageID curbsigpid = i / rp->bsigPP;
+			// printf ("%d\n", curbsigpid);
 			Page curbsigp = getPage(r->bsigf, curbsigpid);
-			int bi = i - curbsigpid * rp->bsigPP;
-			Bits bsigBits = newBits(rp->bm);
-			getBits(curbsigp, bi, bsigBits);
-			setBit(bsigBits, pid);
-			putBits(curbsigp, bi, bsigBits);
+			Offset bi = i % rp->bsigPP;
+			Bits slice = newBits(rp->bm);
+			getBits(curbsigp, bi, slice);
+			setBit(slice, pid);
+			putBits(curbsigp, bi, slice);
 			putPage(r->bsigf, curbsigpid, curbsigp);
+			// free(curbsigp);
+			freeBits(slice);
 		}
 	}
 	freeBits(psig);
