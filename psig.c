@@ -41,7 +41,7 @@ Bits makePageSig(Reln r, Tuple t)
 		// printf("psig:		"); showBits(psig); printf("\n");
 		freeBits(cw);
 	}
-	printf("shifted : %d\n", shifted);
+	// printf("shifted : %d\n", shifted);
 	free(tuplevals);
 	return psig;
 }

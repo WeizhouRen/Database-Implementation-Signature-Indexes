@@ -4,6 +4,7 @@
 #include "defs.h"
 #include "tuple.h"
 #include "tsig.h"
+#include "psig.h"
 #include "bits.h"
 #include "reln.h"
 
@@ -11,10 +12,10 @@ int main(int argc, char **argv)
 {
 	Reln r = openRelation("R");
 	Tuple t = readTuple(r, stdin);
-	Bits b = makeTupleSig(r, t);
+	Bits b = makePageSig(r, t);
 	showBits(b); putchar('\n');
 	int n0, n1, tot; n0 = n1 = tot = 0;
-	for (int i = 0; i < tsigBits(r); i++) {
+	for (int i = 0; i < psigBits(r); i++) {
 		if (bitIsSet(b,i)) n1++; else n0++;
 		tot++;
 	}

@@ -33,8 +33,7 @@ Bits makeTupleSig(Reln r, Tuple t)
 	assert(r != NULL && t != NULL);
 	//TODO
 	Bits tsig = newBits(tsigBits(r));
-	Count u = tsigBits(r) / nAttrs(r);
-	
+	Count u = tsigBits(r) / nAttrs(r), shifted = 0;
 	char **tuplevals = tupleVals(r, t);
 	for (int i = 0; i < nAttrs(r); i++) {
 		if (i == 0) u += tsigBits(r) % nAttrs(r);
@@ -43,12 +42,13 @@ Bits makeTupleSig(Reln r, Tuple t)
 		// printf("val is %s;	%d\n", tuplevals[i], strcmp(tuplevals[i], "?"));
 		if (strcmp(tuplevals[i], "?") != 0) {
 			cw = sigType(r) == 's' ? genCodeword(tuplevals[i], tsigBits(r), tsigBits(r), codeBits(r)) 
-				: genCodeword(tuplevals[i], tsigBits(r), u, u / 2);
+				: genCodeword(tuplevals[i], tsigBits(r), u, codeBits(r));
 		}
 		if (sigType(r) == 'c') {
 			// SIMC codewords have the same length as the signatures they produce
 			// printf("codeword: 			"); showBits(cw); printf("\n");
-			shiftBits(cw, u * i);	// lowest cw shift 0 bit
+			shiftBits(cw, shifted);	// lowest cw shift 0 bit
+			shifted += u;
 			// printf("shifted codeword: 	"); showBits(cw); printf("\n");
 			
 		} 
