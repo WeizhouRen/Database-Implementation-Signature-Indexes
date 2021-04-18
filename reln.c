@@ -209,8 +209,10 @@ PageID addToRelation(Reln r, Tuple t)
 		// get current psig and merge with new psig
 		Bits curpsig = newBits(psigBits(r));
 		getBits(psigp, pid % maxPsigsPP(r), curpsig);
-		if (sigType(r) == 'c') shiftBits(psig, pageNitems(p) * psigBits(r));
-		
+		// printf("curpsig: "); showBits(curpsig); printf("\n");
+		if (sigType(r) == 'c') shiftBits(psig,  tsigBits(r) / nAttrs(r)) ;
+		// printf("psig: "); showBits(psig); printf("\n");
+
 		orBits(curpsig, psig);
 		putBits(psigp, pid % maxPsigsPP(r), curpsig);
 		free(curpsig);

@@ -135,7 +135,6 @@ void andBits(Bits b1, Bits b2)
 
 void orBits(Bits b1, Bits b2)
 {
-	printf("%d %d\n", b1->nbytes, b2->nbytes);
 	assert(b1 != NULL && b2 != NULL);
 	assert(b1->nbytes == b2->nbytes);
 	//TODO

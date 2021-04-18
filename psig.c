@@ -17,11 +17,12 @@ Bits makePageSig(Reln r, Tuple t)
 	//TODO
 	// printf ("tsig len: %d | psig len: %d\n", tsigBits(r), psigBits(r));
 	Bits psig = newBits(psigBits(r));
-	Count u = psigBits(r) / maxTupsPP(r);
+	// Count u = psigBits(r) / maxTupsPP(r);
+	Count u = tsigBits(r) / nAttrs(r);
 	char **tuplevals = tupleVals(r, t);
 	for (int i = 0; i < nAttrs(r); i++) {
 		if (i == 0) u += psigBits(r) % maxTupsPP(r);
-		Bits cw = sigType(r) == 's' ? newBits(psigBits(r)) : newBits(u);
+		Bits cw = newBits(psigBits(r));
 		if (strcmp(tuplevals[i], "?") != 0) {
 			cw = sigType(r) == 's' ? genCodeword(tuplevals[i], psigBits(r), psigBits(r), codeBits(r)) 
 				: genCodeword(tuplevals[i], psigBits(r), u, u / 2);
