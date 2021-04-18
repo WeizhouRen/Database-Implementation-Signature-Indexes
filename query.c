@@ -56,22 +56,23 @@ void scanAndDisplayMatchingTuples(Query q)
 {
 	assert(q != NULL);
 	//TODO
-	Page p; Tuple t; PageID pid; Offset i = 0; Bool hasMatched;
-	for (pid = 0; pid < nPages(q->rel); pid++) {
+	for (PageID pid = 0; pid < nPages(q->rel); pid++) {
 		// not set in matching page, ignore
 		if (!bitIsSet(q->pages, pid)) continue;	
-		p = getPage(dataFile(q->rel), pid);
-		hasMatched = FALSE;
-		for (i = 0; i < pageNitems(p); i++) {
+		Page p = getPage(dataFile(q->rel), pid);
+		Bool hasMatched = FALSE;
+		for (Offset i = 0; i < pageNitems(p); i++) {
 			// if tuple t match the query string, 
 			// display as query result
-			t = getTupleFromPage(q->rel, p, i);
+			Tuple t = getTupleFromPage(q->rel, p, i);
 			if (tupleMatch(q->rel, t, q->qstring)) {
 				hasMatched = TRUE;
 				showTuple(q->rel, t);
 			}
 			free(t);
+			q->ntuples++;
 		}
+		q->ntuppages++;
 		if (!hasMatched) q->nfalse++;
 		free(p);
 	}

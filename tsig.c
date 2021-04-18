@@ -15,7 +15,7 @@ Bits genCodeword(char *attr_value, int m, int k)
 {
 	int nbits = 0;
 	Bits cword = newBits(m);
-	srandom(hash_any(attr_value, k));
+	srandom(hash_any(attr_value, strlen(attr_value)));
 	while (nbits < k) {
 		int i = random() % m;
 		if (!bitIsSet(cword, i)) {
@@ -25,23 +25,20 @@ Bits genCodeword(char *attr_value, int m, int k)
 	}
 	return cword;
 }
+
 // make a tuple signature
-/**
- * Pesudo code:
-	Tsig = AllZeroBits
-	for each attribute A in tuple T {
-		CW = codeword for A
-		Tsig = Tsig OR CW 
-	}
- */
+
 Bits makeTupleSig(Reln r, Tuple t)
 {
 	assert(r != NULL && t != NULL);
 	//TODO
-	Bits tsig = newBits(tsigBits(r)), cw;
+	Bits tsig = newBits(tsigBits(r));
 	char **tuplevals = tupleVals(r, t);
 	for (int i = 0; i < nAttrs(r); i++) {
-		cw = genCodeword(tuplevals[i], tsigBits(r), codeBits(r));
+		Bits cw = newBits(tsigBits(r));
+		if (strcmp(tuplevals[i], "?") != 0) {
+			cw = genCodeword(tuplevals[i], tsigBits(r), codeBits(r));
+		}	
 		orBits(tsig, cw);
 		freeBits(cw);
 	}
@@ -50,15 +47,7 @@ Bits makeTupleSig(Reln r, Tuple t)
 }
 
 // find "matching" pages using tuple signatures
-/**
- * QuerySig = makeTupleSig(Query) 
- * Pages = AllZeroBits
-	foreach Tsig in tsigFile {
-		if (Tsig matches QuerySig) {
-			PID = data page for tuple corresponding to Tsig include PID in Pages
-		}
-	}
-*/
+
 void findPagesUsingTupSigs(Query q)
 {
 	assert(q != NULL);
@@ -72,13 +61,13 @@ void findPagesUsingTupSigs(Query q)
 		for (int tid = 0; tid < pageNitems(p); tid++) {
 			Bits tsig = newBits(tsigBits(q->rel));
 			getBits(p, tid, tsig);	// get current tuple signature
-			q->nsigs++;
 			if (isSubset(qsig, tsig)) {
 				// convert to pageID in data file from pageID in tsig file
 				Offset datapid = (tid + pid * maxTsigsPP(q->rel)) / maxTupsPP(q->rel);
 				setBit(q->pages, datapid);
 			}
 			freeBits(tsig);
+			q->nsigs++;
 		}
 		free(p);
 		q->nsigpages++;
