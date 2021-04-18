@@ -210,7 +210,7 @@ PageID addToRelation(Reln r, Tuple t)
 		Bits curpsig = newBits(psigBits(r));
 		getBits(psigp, pid % maxPsigsPP(r), curpsig);
 		// printf("curpsig: "); showBits(curpsig); printf("\n");
-		if (sigType(r) == 'c') shiftBits(psig,  tsigBits(r) / nAttrs(r)) ;
+		// if (sigType(r) == 'c') shiftBits(psig,  psigBits(r) / nAttrs(r)) ;
 		// printf("psig: "); showBits(psig); printf("\n");
 
 		orBits(curpsig, psig);

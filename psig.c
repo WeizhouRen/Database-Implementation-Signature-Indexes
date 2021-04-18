@@ -18,18 +18,22 @@ Bits makePageSig(Reln r, Tuple t)
 	// printf ("tsig len: %d | psig len: %d\n", tsigBits(r), psigBits(r));
 	Bits psig = newBits(psigBits(r));
 	// Count u = psigBits(r) / maxTupsPP(r);
-	Count u = tsigBits(r) / nAttrs(r);
 	char **tuplevals = tupleVals(r, t);
+	Count shifted = 0;
 	for (int i = 0; i < nAttrs(r); i++) {
-		if (i == 0) u += psigBits(r) % maxTupsPP(r);
+		Count u = psigBits(r) / nAttrs(r);
+		if (i == 0) {
+			u += psigBits(r) % nAttrs(r);
+		}
 		Bits cw = newBits(psigBits(r));
 		if (strcmp(tuplevals[i], "?") != 0) {
 			cw = sigType(r) == 's' ? genCodeword(tuplevals[i], psigBits(r), psigBits(r), codeBits(r)) 
-				: genCodeword(tuplevals[i], psigBits(r), u, u / 2);
+				: genCodeword(tuplevals[i], psigBits(r), u, codeBits(r));
 		}
 		// printf("codeword:	"); showBits(cw); printf("\n");
 		if (sigType(r) == 'c') {
-			shiftBits(cw, u * i);
+			shiftBits(cw, shifted);
+			shifted += u;
 		}
 		// printf("shifted:	"); showBits(cw); printf("\n");
 
@@ -37,6 +41,7 @@ Bits makePageSig(Reln r, Tuple t)
 		// printf("psig:		"); showBits(psig); printf("\n");
 		freeBits(cw);
 	}
+	printf("shifted : %d\n", shifted);
 	free(tuplevals);
 	return psig;
 }
