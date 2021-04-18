@@ -62,8 +62,7 @@ void scanAndDisplayMatchingTuples(Query q)
 		Page p = getPage(dataFile(q->rel), pid);
 		Bool hasMatched = FALSE;
 		for (Offset i = 0; i < pageNitems(p); i++) {
-			// if tuple t match the query string, 
-			// display as query result
+			// if tuple t match the query string, display as query result
 			Tuple t = getTupleFromPage(q->rel, p, i);
 			if (tupleMatch(q->rel, t, q->qstring)) {
 				hasMatched = TRUE;

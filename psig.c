@@ -6,35 +6,34 @@
 #include "reln.h"
 #include "query.h"
 #include "psig.h"
-#include "hash.h"
+#include "tsig.h"
 
-Bits codeword(char *attr_value, int m, int k) 
-{
-	int nbits = 0;
-	Bits cword = newBits(m);
-	srandom(hash_any(attr_value, strlen(attr_value)));
-	while (nbits < k) {
-		int i = random() % m;
-		if (!bitIsSet(cword, i)) {
-			setBit(cword, i);
-			nbits++; 
-		}
-	}
-	return cword;
-}
-
+// roughly half the bits are set in each signature when the page is full. 
+// Since the signatures are coming from c tuples, the bits per codeword 
+// value should be divided by this value (c). 
 Bits makePageSig(Reln r, Tuple t)
 {
 	assert(r != NULL && t != NULL);
 	//TODO
+	// printf ("tsig len: %d | psig len: %d\n", tsigBits(r), psigBits(r));
 	Bits psig = newBits(psigBits(r));
+	Count u = psigBits(r) / maxTupsPP(r);
 	char **tuplevals = tupleVals(r, t);
 	for (int i = 0; i < nAttrs(r); i++) {
-		Bits cw = newBits(psigBits(r));
+		if (i == 0) u += psigBits(r) % maxTupsPP(r);
+		Bits cw = sigType(r) == 's' ? newBits(psigBits(r)) : newBits(u);
 		if (strcmp(tuplevals[i], "?") != 0) {
-			cw = codeword(tuplevals[i], psigBits(r), codeBits(r));
+			cw = sigType(r) == 's' ? genCodeword(tuplevals[i], psigBits(r), psigBits(r), codeBits(r)) 
+				: genCodeword(tuplevals[i], psigBits(r), u, u / 2);
 		}
+		// printf("codeword:	"); showBits(cw); printf("\n");
+		if (sigType(r) == 'c') {
+			shiftBits(cw, u * i);
+		}
+		// printf("shifted:	"); showBits(cw); printf("\n");
+
 		orBits(psig, cw);
+		// printf("psig:		"); showBits(psig); printf("\n");
 		freeBits(cw);
 	}
 	free(tuplevals);
@@ -66,6 +65,6 @@ void findPagesUsingPageSigs(Query q)
 		q->nsigpages++;
 	}
 	freeBits(qsig);
-	printf("Matched Pages:"); showBits(q->pages); putchar('\n');
+	// printf("Matched Pages:"); showBits(q->pages); putchar('\n');
 }
 

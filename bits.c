@@ -15,7 +15,7 @@ typedef struct _BitsRep {
 	Count  nbits;		  // how many bits
 	Count  nbytes;		  // how many bytes in array
 	Byte   bitstring[1];  // array of bytes to hold bits
-	                      // actual array size is nbytes
+	// actual array size is nbytes
 } BitsRep;
 
 // create a new Bits object
@@ -42,11 +42,13 @@ void freeBits(Bits b)
 
 Bool bitIsSet(Bits b, int position)
 {
+	// printf("nbit = %d | position = %d\n", b->nbits, position);
 	assert(b != NULL);
 	assert(0 <= position && position < b->nbits);
 	//TODO
 	int byteIdx = position / 8;
 	int bitIdx = position % 8;
+
 	if (b->bitstring[byteIdx] & (1 << bitIdx)) return TRUE;
 	else return FALSE;
 }
@@ -69,6 +71,7 @@ Bool isSubset(Bits b1, Bits b2)
 
 void setBit(Bits b, int position)
 {
+	// printf("nbit = %d | position = %d\n", b->nbits, position);
 	assert(b != NULL);
 	assert(0 <= position && position < b->nbits);
 	//TODO
@@ -84,7 +87,7 @@ void setAllBits(Bits b)
 	assert(b != NULL);
 	//TODO
 	int last_avail = 8 * b->nbytes - b->nbits;
-    Byte mask = 0xFF >> last_avail;
+	Byte mask = 0xFF >> last_avail;
 	for (int i = 0; i < b->nbytes; i++) {
 		b->bitstring[i] |= 0xFF;
 		if (i == b->nbytes - 1)
@@ -132,6 +135,7 @@ void andBits(Bits b1, Bits b2)
 
 void orBits(Bits b1, Bits b2)
 {
+	printf("%d %d\n", b1->nbytes, b2->nbytes);
 	assert(b1 != NULL && b2 != NULL);
 	assert(b1->nbytes == b2->nbytes);
 	//TODO
@@ -145,20 +149,27 @@ void orBits(Bits b1, Bits b2)
 
 void shiftBits(Bits b, int n)
 {
-    // TODO
-    int last_avail = 8 * b->nbytes - b->nbits;
-    Byte prev, next, mask = 0xFF >> last_avail;
-    for (int i = 0; i < b->nbytes; i++) {
-    	next = b->bitstring[i] >> (8 - n);	// save the left-most n bits
-		b->bitstring[i] = b->bitstring[i] << n;	// left shift bitstring
+	// TODO
+	int last_avail = 8 * b->nbytes - b->nbits;
+	Byte prev, next, mask = 0xFF >> last_avail;
+
+	// shift bytes
+	int byteshifted = n / 8;
+	for (int i = b->nbytes - 1; i >= 0; i--) {
+		b->bitstring[i] = i >= byteshifted ? b->bitstring[i - byteshifted] : 0x00;
+	}
+	// shift bits
+	n %= 8;
+	for (int i = 0; i < b->nbytes; i++) {
+		next = b->bitstring[i] >> (8 - n);	// save the left-most n bits
+		b->bitstring[i] <<= n;	// left shift bitstring
 		b->bitstring[i] |= prev;		// combine with previous left-most n bits
 		if (i == b->nbytes - 1) {
 			b->bitstring[i] &= mask;
 		}
 		prev = next;				// update left-most n bits
-    }
+	}
 }
-
 // get a bit-string (of length b->nbytes)
 // from specified position in Page buffer
 // and place it in a BitsRep structure
@@ -187,7 +198,7 @@ void putBits(Page p, Offset pos, Bits b)
 void showBits(Bits b)
 {
 	assert(b != NULL);
-    //printf("(%d,%d)",b->nbits,b->nbytes);
+	//printf("(%d,%d)",b->nbits,b->nbytes);
 	for (int i = b->nbytes-1; i >= 0; i--) {
 		for (int j = 7; j >= 0; j--) {
 			Byte mask = (1 << j);

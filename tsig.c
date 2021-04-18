@@ -11,13 +11,13 @@
 #include "bits.h"
 
 
-Bits genCodeword(char *attr_value, int m, int k) 
+Bits genCodeword(char *attr_value, int m, int u, int k) 
 {
 	int nbits = 0;
 	Bits cword = newBits(m);
 	srandom(hash_any(attr_value, strlen(attr_value)));
 	while (nbits < k) {
-		int i = random() % m;
+		int i = random() % u;
 		if (!bitIsSet(cword, i)) {
 			setBit(cword, i);
 			nbits++; 
@@ -33,13 +33,36 @@ Bits makeTupleSig(Reln r, Tuple t)
 	assert(r != NULL && t != NULL);
 	//TODO
 	Bits tsig = newBits(tsigBits(r));
+	Count u = tsigBits(r) / nAttrs(r);
+	
 	char **tuplevals = tupleVals(r, t);
 	for (int i = 0; i < nAttrs(r); i++) {
+		if (i == 0) u += tsigBits(r) % nAttrs(r);
+		// printf("count: %d\n", u);
 		Bits cw = newBits(tsigBits(r));
+		// printf("val is %s;	%d\n", tuplevals[i], strcmp(tuplevals[i], "?"));
 		if (strcmp(tuplevals[i], "?") != 0) {
-			cw = genCodeword(tuplevals[i], tsigBits(r), codeBits(r));
-		}	
-		orBits(tsig, cw);
+			cw = sigType(r) == 's' ? genCodeword(tuplevals[i], tsigBits(r), tsigBits(r), codeBits(r)) 
+				: genCodeword(tuplevals[i], tsigBits(r), u, u / 2);
+		}
+		if (sigType(r) == 'c') {
+			// SIMC codewords have the same length as the signatures they produce
+			// printf("codeword: 			"); showBits(cw); printf("\n");
+			shiftBits(cw, u * i);	// lowest cw shift 0 bit
+			// printf("shifted codeword: 	"); showBits(cw); printf("\n");
+			
+		} 
+		// printf("tsig: 	  			"); showBits(tsig); printf("\n");
+		
+		orBits(tsig, cw);	
+		
+		// else {				
+		// 	// CATC codewords is u = m/n bits long, except for the lower-order codeword
+			
+		// 	printf("tsig: 	  "); showBits(tsig); printf("\n");
+		// 	printf("codeword: "); showBits(cw); printf("\n");
+		// }
+		
 		freeBits(cw);
 	}
 	free(tuplevals);
@@ -73,9 +96,5 @@ void findPagesUsingTupSigs(Query q)
 		q->nsigpages++;
 	}
 	freeBits(qsig);
-	// setAllBits(q->pages); // remove this
-
-	// The printf below is primarily for debugging
-	// Remove it before submitting this function
-	printf("Matched Pages:"); showBits(q->pages); putchar('\n');
+	// printf("Matched Pages:"); showBits(q->pages); putchar('\n');
 }

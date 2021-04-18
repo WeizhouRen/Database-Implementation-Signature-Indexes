@@ -29,12 +29,17 @@ void findPagesUsingBitSlices(Query q)
 			bi = i % maxBsigsPP(q->rel);
 			getBits(bsigp, bi, slice);
 			// zero bits in pages which are zero in slice
-			andBits(q->pages, slice);
+			// showBits(q->pages); printf ("\n");
+			// printf("# pages: %d | psig length: %d | bit-slice length: %d\n", nPages(q->rel), psigBits(q->rel), bsigBits(q->rel));
+			// andBits(q->pages, slice);
+			for (int si = 0; si < nPages(q->rel); si++) {
+				if (bitIsSet(slice, si)) continue;
+				unsetBit(q->pages, si);
+			}
 			freeBits(slice);
 			free(bsigp);
 		}
 	}
 	freeBits(qsig);
-	printf("Matched Pages:"); showBits(q->pages); putchar('\n');
+	// printf("Matched Pages:"); showBits(q->pages); putchar('\n');
 }
-

@@ -206,9 +206,11 @@ PageID addToRelation(Reln r, Tuple t)
 		addOneItem(psigp);
 		
 	} else {
-		// get current psig and do OR with new psig
+		// get current psig and merge with new psig
 		Bits curpsig = newBits(psigBits(r));
-		getBits(psigp, pid % maxPsigsPP(r), curpsig);	
+		getBits(psigp, pid % maxPsigsPP(r), curpsig);
+		if (sigType(r) == 'c') shiftBits(psig, pageNitems(p) * psigBits(r));
+		
 		orBits(curpsig, psig);
 		putBits(psigp, pid % maxPsigsPP(r), curpsig);
 		free(curpsig);
