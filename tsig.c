@@ -33,35 +33,21 @@ Bits makeTupleSig(Reln r, Tuple t)
 	assert(r != NULL && t != NULL);
 	//TODO
 	Bits tsig = newBits(tsigBits(r));
-	Count u = tsigBits(r) / nAttrs(r), shifted = 0;
+	Count shifted = 0;
 	char **tuplevals = tupleVals(r, t);
 	for (int i = 0; i < nAttrs(r); i++) {
+		Count u = tsigBits(r) / nAttrs(r);
 		if (i == 0) u += tsigBits(r) % nAttrs(r);
-		// printf("count: %d\n", u);
 		Bits cw = newBits(tsigBits(r));
-		// printf("val is %s;	%d\n", tuplevals[i], strcmp(tuplevals[i], "?"));
 		if (strcmp(tuplevals[i], "?") != 0) {
 			cw = sigType(r) == 's' ? genCodeword(tuplevals[i], tsigBits(r), tsigBits(r), codeBits(r)) 
 				: genCodeword(tuplevals[i], tsigBits(r), u, codeBits(r));
 		}
 		if (sigType(r) == 'c') {
-			// SIMC codewords have the same length as the signatures they produce
-			// printf("codeword: 			"); showBits(cw); printf("\n");
 			shiftBits(cw, shifted);	// lowest cw shift 0 bit
 			shifted += u;
-			// printf("shifted codeword: 	"); showBits(cw); printf("\n");
-			
 		} 
-		// printf("tsig: 	  			"); showBits(tsig); printf("\n");
-		
 		orBits(tsig, cw);	
-		
-		// else {				
-		// 	// CATC codewords is u = m/n bits long, except for the lower-order codeword
-			
-		// 	printf("tsig: 	  "); showBits(tsig); printf("\n");
-		// 	printf("codeword: "); showBits(cw); printf("\n");
-		// }
 		
 		freeBits(cw);
 	}
