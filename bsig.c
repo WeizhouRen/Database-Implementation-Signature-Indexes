@@ -40,7 +40,7 @@ void findPagesUsingBitSlices(Query q)
 			free(bsigp);
 		}
 	}
-//	printf("qsig is:     :"); showBits(qsig); putchar('\n');
+	//	printf("qsig is:     :"); showBits(qsig); putchar('\n');
 
 	freeBits(qsig);
 	// printf("Matched Pages:"); showBits(q->pages); putchar('\n');

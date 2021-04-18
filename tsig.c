@@ -39,19 +39,23 @@ Bits makeTupleSig(Reln r, Tuple t)
 		Count u = tsigBits(r) / nAttrs(r);
 		if (i == 0) u += tsigBits(r) % nAttrs(r);
 		Bits cw = newBits(tsigBits(r));
+		// printf("cwlen: %d | u: %d | codeBits: %d\n", tsigBits(r), u, codeBits(r));
 		if (strcmp(tuplevals[i], "?") != 0) {
 			cw = sigType(r) == 's' ? genCodeword(tuplevals[i], tsigBits(r), tsigBits(r), codeBits(r)) 
-				: genCodeword(tuplevals[i], tsigBits(r), u, codeBits(r));
+				: genCodeword(tuplevals[i], tsigBits(r), u, u / 2);
 		}
+		// printf("codeword:	"); showBits(cw); printf("\n");
 		if (sigType(r) == 'c') {
 			shiftBits(cw, shifted);	// lowest cw shift 0 bit
 			shifted += u;
 		} 
+		// printf("shifted:	"); showBits(cw); printf("\n");
 		orBits(tsig, cw);	
 		
 		freeBits(cw);
 	}
 	free(tuplevals);
+	// printf("tsig:		"); showBits(tsig); printf("\n");
 	return tsig;
 }
 

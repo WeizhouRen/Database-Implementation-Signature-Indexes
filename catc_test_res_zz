@@ -137,9 +137,9 @@ Query Stats:
 Query Stats:
 # sig pages read:    20
 # signatures read:   10000
-# data pages read:   2
-# tuples examined:   194
-# false match pages: 2
+# data pages read:   0
+# tuples examined:   0
+# false match pages: 0
 Query Stats:
 # sig pages read:    21
 # signatures read:   104

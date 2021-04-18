@@ -22,9 +22,7 @@ Bits makePageSig(Reln r, Tuple t)
 	Count shifted = 0;
 	for (int i = 0; i < nAttrs(r); i++) {
 		Count u = psigBits(r) / nAttrs(r);
-		if (i == 0) {
-			u += psigBits(r) % nAttrs(r);
-		}
+		if (i == 0) u += psigBits(r) % nAttrs(r);
 		Bits cw = newBits(psigBits(r));
 		if (strcmp(tuplevals[i], "?") != 0) {
 			cw = sigType(r) == 's' ? genCodeword(tuplevals[i], psigBits(r), psigBits(r), codeBits(r)) 
