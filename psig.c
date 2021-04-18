@@ -23,10 +23,11 @@ Bits makePageSig(Reln r, Tuple t)
 	for (int i = 0; i < nAttrs(r); i++) {
 		Count u = psigBits(r) / nAttrs(r);
 		if (i == 0) u += psigBits(r) % nAttrs(r);
+		// printf("u = %d | codebits = %d\n", u, codeBits(r));
 		Bits cw = newBits(psigBits(r));
 		if (strcmp(tuplevals[i], "?") != 0) {
 			cw = sigType(r) == 's' ? genCodeword(tuplevals[i], psigBits(r), psigBits(r), codeBits(r)) 
-				: genCodeword(tuplevals[i], psigBits(r), u, codeBits(r));
+				: genCodeword(tuplevals[i], psigBits(r), u, u / (2 * maxTupsPP(r)));
 		}
 		// printf("codeword:	"); showBits(cw); printf("\n");
 		if (sigType(r) == 'c') {

@@ -31,8 +31,8 @@ Query Stats:
 # false match pages: 0
 7663852,ivUryYVexVPJQFjhHxea,a3-069,a4-235
 Query Stats:
-# sig pages read:    5
-# signatures read:   9
+# sig pages read:    4
+# signatures read:   7
 # data pages read:   1
 # tuples examined:   97
 # false match pages: 0
@@ -60,7 +60,7 @@ Query Stats:
 7664096,PjZZsBYoEYAMzgpCgRKg,a3-064,a4-147
 Query Stats:
 # sig pages read:    8
-# signatures read:   18
+# signatures read:   14
 # data pages read:   1
 # tuples examined:   97
 # false match pages: 0
@@ -124,7 +124,7 @@ Query Stats:
 7663527,DxQAAntFsMFLfUXzeGGh,a3-242,a4-242
 Query Stats:
 # sig pages read:    8
-# signatures read:   18
+# signatures read:   14
 # data pages read:   12
 # tuples examined:   1164
 # false match pages: 2
@@ -147,8 +147,8 @@ Query Stats:
 # tuples examined:   0
 # false match pages: 0
 Query Stats:
-# sig pages read:    5
-# signatures read:   9
+# sig pages read:    4
+# signatures read:   7
 # data pages read:   0
 # tuples examined:   0
 # false match pages: 0
@@ -172,7 +172,7 @@ Query Stats:
 # false match pages: 0
 Query Stats:
 # sig pages read:    8
-# signatures read:   18
+# signatures read:   14
 # data pages read:   0
 # tuples examined:   0
 # false match pages: 0

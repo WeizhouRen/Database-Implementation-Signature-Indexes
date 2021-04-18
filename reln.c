@@ -161,8 +161,8 @@ PageID addToRelation(Reln r, Tuple t)
 	// compute tuple signature and add to tsigf
 		
 	//TODO
-	Bits tsig = makeTupleSig(r, t);	// compute tuple signature
-	PageID tsigpid = rp->tsigNpages - 1;
+	Bits tsig = makeTupleSig(r, t);				// compute tuple signature
+	PageID tsigpid = rp->tsigNpages - 1;		// get current tsig pid
 	Page tsigp = getPage(r->tsigf, tsigpid);	// get last page
 	// check if slot on last page; if not add new page
 	if (pageNitems(tsigp) == rp->tsigPP) {
@@ -179,19 +179,16 @@ PageID addToRelation(Reln r, Tuple t)
 	putPage(r->tsigf, tsigpid, tsigp);
 	freeBits(tsig);
 	
-
 	// compute page signature and add to psigf
 	//TODO
 	// check if the last page in data file is new added
 	// if new added, add the psig directly to psigf
 	// otherwise, get psig of current data page and orBits
-	
-
 	Bits psig = makePageSig(r, t);				// compute page signature
 	PageID psigpid = rp->psigNpages - 1; 		// get current psig pid
 	Page psigp = getPage(r->psigf, psigpid); 	// get last psig page
 		
-	if (nPsigs(r) != nPages(r)) { 
+	if (rp->npsigs != rp->npages) { 
 		// new added page
 		if (pageNitems(psigp) == rp->psigPP) {
 			addPage(r->psigf);
@@ -202,6 +199,7 @@ PageID addToRelation(Reln r, Tuple t)
 			if (psigp == NULL) return NO_PAGE;
 		}
 		rp->npsigs++;
+		// add new psig
 		putBits(psigp, pageNitems(psigp), psig);
 		addOneItem(psigp);
 		
@@ -209,10 +207,6 @@ PageID addToRelation(Reln r, Tuple t)
 		// get current psig and merge with new psig
 		Bits curpsig = newBits(psigBits(r));
 		getBits(psigp, pid % maxPsigsPP(r), curpsig);
-		// printf("curpsig: "); showBits(curpsig); printf("\n");
-		// if (sigType(r) == 'c') shiftBits(psig,  psigBits(r) / nAttrs(r)) ;
-		// printf("psig: "); showBits(psig); printf("\n");
-
 		orBits(curpsig, psig);
 		putBits(psigp, pid % maxPsigsPP(r), curpsig);
 		free(curpsig);
@@ -222,14 +216,19 @@ PageID addToRelation(Reln r, Tuple t)
 	// use page signature to update bit-slices
 
 	//TODO
+	// Iterate every bit-slice
 	for (int i = 0; i < rp->pm; i++) {
+		// update bit-slices corresponding to 1-bits in the page signature
 		if (bitIsSet(psig, i)) {
 			PageID curbsigpid = i / rp->bsigPP;	
 			Page curbsigp = getPage(r->bsigf, curbsigpid);
 			Offset bi = i % rp->bsigPP;
 			Bits slice = newBits(rp->bm);
+			// get i'th bit slice from bsigFile
 			getBits(curbsigp, bi, slice);
+			// set the PID'th bit in Slice
 			setBit(slice, pid);
+			// write updated Slice back to bsigFile
 			putBits(curbsigp, bi, slice);
 			putPage(r->bsigf, curbsigpid, curbsigp);
 			freeBits(slice);
